@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
 import pandas as pd
-from tqdm import tqdm
 from PIL import Image
-from datetime import datetime
 import torch
 from torchvision import transforms
-from torch import nn
-from torch.utils.data import DataLoader
-from torcheval.metrics import BinaryAccuracy
-from torcheval.metrics.functional import binary_accuracy
 torch.manual_seed(18)
-torch.cuda.is_available()
 
 
 class FacesDataset(torch.utils.data.Dataset):
