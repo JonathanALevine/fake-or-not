@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
 import torch
 from torch import nn
 torch.manual_seed(18)
 torch.cuda.is_available()
+from datetime import datetime
 
 
 class ConvBlock(nn.Module):
@@ -43,3 +43,12 @@ class FaceNetV3(nn.Module):
         x = self.flatten(x)
         x = self.fc(x)
         return x
+    
+
+    def save(self):
+        now = datetime.now()
+        date_string = now.strftime("%Y-%m-%d-%H-%M-%S")
+        model_path = f"models/{self.__class__.__name__}-{date_string}.pth"
+        print(f"Saving model to {model_path}")
+        torch.save(self.state_dict(), model_path)
+        print('Done!')

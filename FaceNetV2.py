@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import torch
 from torch import nn
 torch.manual_seed(18)
