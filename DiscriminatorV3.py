@@ -19,7 +19,7 @@ class ConvBlock(nn.Module):
         return x
 
 
-class FaceNetV3(nn.Module):
+class DiscriminatorV3(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer1 = nn.Sequential(ConvBlock(in_channels=3, out_channels=32, kernel_size=(7, 7), stride=2, padding=0))

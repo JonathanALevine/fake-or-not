@@ -4,7 +4,7 @@ torch.manual_seed(18)
 torch.cuda.is_available()
 
 
-class FaceNetV2(nn.Module):
+class DiscriminatorV2(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer1 = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(4, 4), stride=1, padding=0),
