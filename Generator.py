@@ -8,14 +8,37 @@ from PIL import Image
 from torchvision import transforms
 
 
+class View(nn.Module):
+    def __init__(self, *shape):
+        super().__init__()
+        self.shape = shape
+
+    def forward(self, x):
+        return x.view(x.size(0), *self.shape)
+
+
 class Generator(nn.Module):
     def __init__(self):
         super().__init__()
-        pass
+        self.layer1 = nn.Sequential(nn.Linear(32, 131072),
+                                    nn.ReLU())
+        self.layer2 = nn.Sequential(View(32, 64, 64),
+                                    nn.ReLU())
+        self.layer3 = nn.Sequential(nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1),
+                                    nn.ReLU())
+        self.layer4 = nn.Sequential(nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            nn.ReLU())
+        self.layer5 = nn.Sequential(nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU())
 
 
     def forward(self, x):
-        pass
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.layer5(x)
+        return x        
 
 
 def main():
@@ -24,8 +47,11 @@ def main():
 
 if __name__ == '__main__':
     main()
-    test_tensor = torch.rand(3, 256, 256)
-    print(test_tensor)
-    image = transforms.ToPILImage()(test_tensor)
+    test_tensor = torch.rand(1, 32)
+    print(test_tensor, test_tensor.shape)
+    model = Generator()
+    image_tensor = model.forward(test_tensor)
+    print(image_tensor.shape)
+    image = transforms.ToPILImage()(image_tensor.squeeze(0))
     image.show()
     
