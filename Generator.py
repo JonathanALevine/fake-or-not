@@ -6,6 +6,20 @@ torch.cuda.is_available()
 from datetime import datetime
 from PIL import Image
 from torchvision import transforms
+import torch.nn.functional as F
+
+
+class InverseMaxPool2d(nn.Module):
+    def __init__(self, scale_factor):
+        super(InverseMaxPool2d, self).__init__()
+        self.scale_factor = scale_factor
+        
+    def forward(self, x):
+        # Nearest neighbor interpolation
+        x = F.interpolate(x, scale_factor=self.scale_factor, mode='nearest')
+        # Convolution with learnable filter
+        x = nn.Conv2d(in_channels=x.shape[1], out_channels=x.shape[1], kernel_size=3, stride=1, padding=1)(x)
+        return x
 
 
 class View(nn.Module):
@@ -25,10 +39,13 @@ class Generator(nn.Module):
         self.layer2 = nn.Sequential(View(32, 64, 64),
                                     nn.ReLU())
         self.layer3 = nn.Sequential(nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1),
+                                    InverseMaxPool2d(scale_factor=1),
                                     nn.ReLU())
         self.layer4 = nn.Sequential(nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1),
+                                    InverseMaxPool2d(scale_factor=1),
                             nn.ReLU())
         self.layer5 = nn.Sequential(nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=3, stride=1, padding=1),
+                                    InverseMaxPool2d(scale_factor=1),
                                     nn.ReLU())
 
 
