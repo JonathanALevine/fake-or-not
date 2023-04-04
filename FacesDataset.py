@@ -16,7 +16,7 @@ class FacesDataset(torch.utils.data.Dataset):
         image_path = self.data['path'][idx]
         image = Image.open(image_path)
         label = self.data['label'][idx]
-        return self.image_transform(image), label
+        return self.image_transform(image), label, image_path
     
 
     def __len__(self):
