@@ -1,2 +1,9 @@
 # ignore venvs
 venv
+
+# any cache files
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd	
