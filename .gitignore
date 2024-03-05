@@ -7,3 +7,12 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd	
+
+# ignore yamls
+*.yaml
+
+# ignore tt_builds
+tt_build/
+
+# ignore generated modules
+generated_modules/

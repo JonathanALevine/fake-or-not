@@ -13,6 +13,10 @@ from DiscriminatorV3 import DiscriminatorV3, ConvBlock
 from DiscriminatorV4 import DiscriminatorV4, ConvBlock
 from FacesDataset import FacesDataset
 import matplotlib.pyplot as plt
+import pybuda
+
+
+__DEVICE__ = 'cpu'
 
 
 def epoch_system_out_string(epoch:int, train_loss:float, train_acc:float, val_loss:float, val_acc:float, test_acc:float)->str:
@@ -20,7 +24,7 @@ def epoch_system_out_string(epoch:int, train_loss:float, train_acc:float, val_lo
 
 
 @torch.no_grad()
-def estimate_performance(model, data_loader, device='cuda'):
+def estimate_performance(model, data_loader, device=__DEVICE__):
     loss_value = 0.0
     acc_value = 0.0
     loss_fn = nn.BCELoss()
@@ -39,7 +43,7 @@ def estimate_performance(model, data_loader, device='cuda'):
     return loss_value/data_loader.__len__(), acc_value/data_loader.__len__()
 
 
-def train(model, optimizer, train_loader, val_loader, test_loader, epochs, loss_fn, device='cuda'):
+def train(model, optimizer, train_loader, val_loader, test_loader, epochs, loss_fn, device=__DEVICE__):
     model.to(device)
     loss_fn.to(device)
     metric = BinaryAccuracy()
@@ -70,6 +74,17 @@ def train(model, optimizer, train_loader, val_loader, test_loader, epochs, loss_
         print(epoch_system_out_string(epoch, train_loss, train_acc, val_loss, val_acc, test_acc))
 
 
+class myNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.hidden = nn.Linear(10000, 3)
+        self.output = nn.Linear(3, 1)
+
+    def forward(self, x):
+        x = self.hidden(x)
+        return self.output(x)
+
+
 if __name__=="__main__":
     print(torch.cuda.is_available())
 
@@ -87,17 +102,69 @@ if __name__=="__main__":
     test_loader = DataLoader(dataset=test_set, batch_size=batch_size, shuffle=True)
 
     # Instatiate the model
-    model = DiscriminatorV4()
+    # model = DiscriminatorV4().to(__DEVICE__)
+    model = myNet()
 
     # test a forward pass on the discriminator
-    print(model.forward(torch.randn(1, 3, 256, 256)), model.forward(torch.randn(1, 3, 256, 256)).size())
+    # print(model.forward(torch.randn(1, 3, 256, 256)), model.forward(torch.randn(1, 3, 256, 256)).size())
+    # output = pybuda.PyTorchModule("direct_pt", DiscriminatorV4()).run(torch.randn(1, 3, 256, 256))
 
-    loss_fn = nn.BCELoss()
+    # try the forward pass on the cpu
+    # input = torch.randn(1, 3, 256, 256).to(__DEVICE__)
+    input = torch.rand(1, 10000)
+    output = model.forward(input)
+    print("Pytorch pass ......")
+    print(output)
 
-    params = model.parameters()
-    learning_rate = 3e-4
-    optimizer = torch.optim.Adam(params, lr=learning_rate)
+    # try the forward pass on the tt-card
+    module = pybuda.PyTorchModule("direct_pt", myNet())
+
+    tt0 = pybuda.TTDevice("tt0", 
+                          module=module, 
+                          arch=pybuda.BackendDevice.Grayskull,
+                          devtype=pybuda.BackendType.Silicon)
+
+    # tt0 = pybuda.TTDevice("grayskull0")
+    # tt0.place_module(module)
+    
+    for i in range(1000):
+        input = torch.rand(1, 10000)
+        # print(input)
+        print(f"PyBUDA forward pass ..... {i}")
+        output = pybuda.run_inference(inputs=[input])
+        print(output.get())
+
+    # input = torch.rand(1, 1)
+    # output = pybuda.run_inference(inputs=[input])
+    # # output = pybuda.PyTorchModule("direct_pt", myNet()).run(input)
+    # print("PyBUDA forward pass .....")
+    # print(output)
+
+    # # now try the CNN on the cpu
+    # model = DiscriminatorV4()
+    # input = torch.randn(1, 3, 256, 256)
+    # output = model.forward(input)
+    # print("PyTorch forward pass ......")
+    # print(output)
+
+    # # try the forward pass on the tt-card
+    # input = torch.randn(1, 3, 256, 256)
+    # output = pybuda.PyTorchModule("direct_pt", DiscriminatorV4()).run(input)
+    # print("PyBUDA forward pass .....")
+    # print(output)
+
+    # try the forward pass on the tt-card
+    # input = torch.rand(1, 1)
+    # output = pybuda.PyTorchModule("direct_pt", myNet()).run(input)
+    # print("PyBUDA forward pass .....")
+    # print(output)
+
+    # loss_fn = nn.BCELoss()
+
+    # params = model.parameters()
+    # learning_rate = 3e-4
+    # optimizer = torch.optim.Adam(params, lr=learning_rate)
 
     # train the model
     num_epochs = 1
-    train(model=model, optimizer=optimizer, train_loader=train_loader, val_loader=valid_loader, test_loader=test_loader,loss_fn=loss_fn, epochs=num_epochs)
+    # train(model=model, optimizer=optimizer, train_loader=train_loader, val_loader=valid_loader, test_loader=test_loader,loss_fn=loss_fn, epochs=num_epochs)
