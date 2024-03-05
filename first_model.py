@@ -14,6 +14,7 @@ class BudaMatmul(PyBudaModule):
         super().__init__(name)
         self.weights = pybuda.Parameter(torch.randn(1, 1, 32, 32), requires_grad=False)
 
+
   def forward(self, act):
       return pybuda.op.Matmul("matmul", act, self.weights)
 
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     act = TensorFromPytorch(act, data_format, constant)
     tt0.push_to_inputs(act)
 
-    for i in range(1000):
+    for i in range(10000):
         print(f"running tt-grayskull forward pass ..... {i}")
-        result = pybuda.run_inference(inputs=[act])
+        result = pybuda.run_inference(inputs=[act], input_count=1, _sequential=True)
         print(result.get())
