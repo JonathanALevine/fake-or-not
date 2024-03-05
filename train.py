@@ -102,37 +102,37 @@ if __name__=="__main__":
     test_loader = DataLoader(dataset=test_set, batch_size=batch_size, shuffle=True)
 
     # Instatiate the model
-    # model = DiscriminatorV4().to(__DEVICE__)
-    model = myNet()
+    model = DiscriminatorV4().to(__DEVICE__)
 
     # test a forward pass on the discriminator
-    # print(model.forward(torch.randn(1, 3, 256, 256)), model.forward(torch.randn(1, 3, 256, 256)).size())
+    input = torch.randn(1, 3, 256, 256).to(__DEVICE__)
+    print(model.forward(input), model.forward(input).size())
     # output = pybuda.PyTorchModule("direct_pt", DiscriminatorV4()).run(torch.randn(1, 3, 256, 256))
 
-    # try the forward pass on the cpu
-    # input = torch.randn(1, 3, 256, 256).to(__DEVICE__)
-    input = torch.rand(1, 10000)
-    output = model.forward(input)
-    print("Pytorch pass ......")
-    print(output)
+    # # try the forward pass on the cpu
+    # # input = torch.randn(1, 3, 256, 256).to(__DEVICE__)
+    # input = torch.rand(1, 10000)
+    # output = model.forward(input)
+    # print("Pytorch pass ......")
+    # print(output)
 
     # try the forward pass on the tt-card
-    module = pybuda.PyTorchModule("direct_pt", myNet())
+    # module = pybuda.PyTorchModule("direct_pt", myNet())
 
-    tt0 = pybuda.TTDevice("tt0", 
-                          module=module, 
-                          arch=pybuda.BackendDevice.Grayskull,
-                          devtype=pybuda.BackendType.Silicon)
+    # tt0 = pybuda.TTDevice("tt0", 
+    #                       module=module, 
+    #                       arch=pybuda.BackendDevice.Grayskull,
+    #                       devtype=pybuda.BackendType.Silicon)
 
     # tt0 = pybuda.TTDevice("grayskull0")
     # tt0.place_module(module)
     
-    for i in range(1000):
-        input = torch.rand(1, 10000)
-        # print(input)
-        print(f"PyBUDA forward pass ..... {i}")
-        output = pybuda.run_inference(inputs=[input])
-        print(output.get())
+    # for i in range(1000):
+    #     input = torch.rand(1, 10000)
+    #     # print(input)
+    #     print(f"PyBUDA forward pass ..... {i}")
+    #     output = pybuda.run_inference(inputs=[input])
+    #     print(output.get())
 
     # input = torch.rand(1, 1)
     # output = pybuda.run_inference(inputs=[input])
@@ -159,12 +159,12 @@ if __name__=="__main__":
     # print("PyBUDA forward pass .....")
     # print(output)
 
-    # loss_fn = nn.BCELoss()
+    loss_fn = nn.BCELoss()
 
-    # params = model.parameters()
-    # learning_rate = 3e-4
-    # optimizer = torch.optim.Adam(params, lr=learning_rate)
+    params = model.parameters()
+    learning_rate = 3e-4
+    optimizer = torch.optim.Adam(params, lr=learning_rate)
 
     # train the model
     num_epochs = 1
-    # train(model=model, optimizer=optimizer, train_loader=train_loader, val_loader=valid_loader, test_loader=test_loader,loss_fn=loss_fn, epochs=num_epochs)
+    train(model=model, optimizer=optimizer, train_loader=train_loader, val_loader=valid_loader, test_loader=test_loader,loss_fn=loss_fn, epochs=num_epochs)
