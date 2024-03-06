@@ -10,13 +10,52 @@ from torcheval.metrics.functional import binary_accuracy
 torch.manual_seed(18)
 torch.cuda.is_available()
 from DiscriminatorV3 import DiscriminatorV3, ConvBlock
-from DiscriminatorV4 import DiscriminatorV4, ConvBlock
 from FacesDataset import FacesDataset
 import matplotlib.pyplot as plt
 import pybuda
 
 
 __DEVICE__ = 'cpu'
+
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding):
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
+        self.relu = nn.ReLU()
+        self.pool = nn.AvgPool2d(kernel_size=(3, 3), stride=2, padding=0)
+        
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.relu(x)
+        x = self.pool(x)
+        return x
+
+
+class DiscriminatorV4(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layer1 = nn.Sequential(ConvBlock(in_channels=3, out_channels=32, kernel_size=(7, 7), stride=2, padding=0))
+        self.layer2 = nn.Sequential(ConvBlock(in_channels=32, out_channels=32, kernel_size=(5, 5), stride=2, padding=0))
+        self.layer3 = nn.Sequential(ConvBlock(in_channels=32, out_channels=32, kernel_size=(3, 3), stride=2, padding=0))
+        self.flatten = nn.Flatten()
+        self.fc = nn.Sequential(nn.Linear(in_features=128, out_features=64),
+                                    nn.ReLU(),
+                                    nn.Linear(in_features=64, out_features=32),
+                                    nn.ReLU(),
+                                    nn.Linear(in_features=32, out_features=16),
+                                    nn.ReLU(),
+                                    nn.Linear(in_features=16, out_features=1),
+                                    nn.Sigmoid())
+        
+
+    def forward(self, x):
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.flatten(x)
+        x = self.fc(x)
+        return x
 
 
 def epoch_system_out_string(epoch:int, train_loss:float, train_acc:float, val_loss:float, val_acc:float, test_acc:float)->str:
@@ -107,57 +146,6 @@ if __name__=="__main__":
     # test a forward pass on the discriminator
     input = torch.randn(1, 3, 256, 256).to(__DEVICE__)
     print(model.forward(input), model.forward(input).size())
-    # output = pybuda.PyTorchModule("direct_pt", DiscriminatorV4()).run(torch.randn(1, 3, 256, 256))
-
-    # # try the forward pass on the cpu
-    # # input = torch.randn(1, 3, 256, 256).to(__DEVICE__)
-    # input = torch.rand(1, 10000)
-    # output = model.forward(input)
-    # print("Pytorch pass ......")
-    # print(output)
-
-    # try the forward pass on the tt-card
-    # module = pybuda.PyTorchModule("direct_pt", myNet())
-
-    # tt0 = pybuda.TTDevice("tt0", 
-    #                       module=module, 
-    #                       arch=pybuda.BackendDevice.Grayskull,
-    #                       devtype=pybuda.BackendType.Silicon)
-
-    # tt0 = pybuda.TTDevice("grayskull0")
-    # tt0.place_module(module)
-    
-    # for i in range(1000):
-    #     input = torch.rand(1, 10000)
-    #     # print(input)
-    #     print(f"PyBUDA forward pass ..... {i}")
-    #     output = pybuda.run_inference(inputs=[input])
-    #     print(output.get())
-
-    # input = torch.rand(1, 1)
-    # output = pybuda.run_inference(inputs=[input])
-    # # output = pybuda.PyTorchModule("direct_pt", myNet()).run(input)
-    # print("PyBUDA forward pass .....")
-    # print(output)
-
-    # # now try the CNN on the cpu
-    # model = DiscriminatorV4()
-    # input = torch.randn(1, 3, 256, 256)
-    # output = model.forward(input)
-    # print("PyTorch forward pass ......")
-    # print(output)
-
-    # # try the forward pass on the tt-card
-    # input = torch.randn(1, 3, 256, 256)
-    # output = pybuda.PyTorchModule("direct_pt", DiscriminatorV4()).run(input)
-    # print("PyBUDA forward pass .....")
-    # print(output)
-
-    # try the forward pass on the tt-card
-    # input = torch.rand(1, 1)
-    # output = pybuda.PyTorchModule("direct_pt", myNet()).run(input)
-    # print("PyBUDA forward pass .....")
-    # print(output)
 
     loss_fn = nn.BCELoss()
 
