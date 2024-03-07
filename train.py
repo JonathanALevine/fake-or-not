@@ -12,10 +12,9 @@ torch.cuda.is_available()
 from DiscriminatorV3 import DiscriminatorV3, ConvBlock
 from FacesDataset import FacesDataset
 import matplotlib.pyplot as plt
-import pybuda
 
 
-__DEVICE__ = 'cpu'
+__DEVICE__ = 'cuda'
 
 
 class ConvBlock(nn.Module):
@@ -128,7 +127,7 @@ if __name__=="__main__":
     print(torch.cuda.is_available())
 
     # set the batch size
-    batch_size = 32
+    batch_size = 512
 
     # Make the train, valid and test data loaders
     training_set = FacesDataset('datasets/train.csv')

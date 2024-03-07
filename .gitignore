@@ -1,5 +1,7 @@
 # ignore venvs
 venv
+venv310
+get-pip.py
 
 # any cache files
 __pycache__/
