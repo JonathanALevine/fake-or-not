@@ -1,0 +1,20 @@
+# ignore venvs
+venv
+venv310
+get-pip.py
+
+# any cache files
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd	
+
+# ignore yamls
+*.yaml
+
+# ignore tt_builds
+tt_build/
+
+# ignore generated modules
+generated_modules/
