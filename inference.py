@@ -10,6 +10,12 @@ from pybuda.op.convolution import Conv2d
 from pybuda import PyTorchModule
 from FacesDataset import FacesDataset
 from torchvision.transforms import ToPILImage
+import argparse
+
+import os
+
+
+os.environ['TT_BACKEND_TIMEOUT'] = '0'
 
 
 class ConvBlock(nn.Module):
@@ -53,6 +59,11 @@ class DiscriminatorV4(nn.Module):
 
 
 if __name__=="__main__":
+    parser = argparse.ArgumentParser(description='Run matmul with BudaMatmul module')
+    parser.add_argument('--its', type=int, default=1, help='Number of iterations for inference')
+    args = parser.parse_args()
+    its = args.its
+
     # print(torch.cuda.is_available())
     to_pil = ToPILImage()
 
@@ -69,9 +80,6 @@ if __name__=="__main__":
     training_set = FacesDataset('datasets/train.csv')
     item = training_set.__getitem__(0)
     image_tensor, label, image_path = item
-    # print(training_set.__getitem__(0))
-    # print(image_tensor)
-    # print(image_tensor.shape)
     pil_image = to_pil(image_tensor)
     pil_image.save("test.png")
 
@@ -79,7 +87,8 @@ if __name__=="__main__":
     print(act.shape)
 
     # run a test forward pass on the net
-    tt0.push_to_inputs(act)
-    result = pybuda.run_inference(input_count=1, _sequential=True)
-    val = result.get()[0]
-    print(val.value())
+    for i in range(its):
+        tt0.push_to_inputs(act)
+        result = pybuda.run_inference(input_count=1, _sequential=True)
+        val = result.get()[0]
+        print(val.value(), f'{i}/{its}')
